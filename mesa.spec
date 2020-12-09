@@ -49,9 +49,9 @@
 
 Name:           mesa
 Summary:        Mesa graphics libraries
-%global ver 20.2.3
+%global ver 20.2.4
 Version:        %{lua:ver = string.gsub(rpm.expand("%{ver}"), "-", "~"); print(ver)}
-Release:        2%{?dist}
+Release:        1%{?dist}
 License:        MIT
 URL:            http://www.mesa3d.org
 
@@ -583,6 +583,9 @@ popd
 %endif
 
 %changelog
+* Wed Dec 09 2020 Pete Walter <pwalter@fedoraproject.org> - 20.2.4-1
+- Update to 20.2.4
+
 * Sat Nov 28 2020 Peter Robinson <pbrobinson@fedoraproject.org> - 20.2.3-2
 - Cleanup vulkan conditionals
 - Update meson options and nomenclature
