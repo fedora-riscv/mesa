@@ -50,9 +50,9 @@
 
 Name:           mesa
 Summary:        Mesa graphics libraries
-%global ver 20.2.4
+%global ver 20.2.5
 Version:        %{lua:ver = string.gsub(rpm.expand("%{ver}"), "-", "~"); print(ver)}
-Release:        2%{?dist}
+Release:        1%{?dist}
 License:        MIT
 URL:            http://www.mesa3d.org
 
@@ -579,6 +579,9 @@ popd
 %endif
 
 %changelog
+* Wed Dec 16 2020 Pete Walter <pwalter@fedoraproject.org> - 20.2.5-1
+- Update to 20.2.5
+
 * Tue Dec 15 2020 Pete Walter <pwalter@fedoraproject.org> - 20.2.4-2
 - Revert vulkan conditional changes as it broke s390x deps
 
