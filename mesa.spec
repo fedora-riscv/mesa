@@ -1,23 +1,21 @@
 %ifnarch s390x
 %global with_hardware 1
+%global with_vulkan_hw 1
 %global with_vdpau 1
 %global with_vaapi 1
 %global with_nine 1
 %global with_omx 1
 %global with_opencl 1
-%global base_drivers nouveau,r100,r200
+%global base_dri nouveau,r100,r200
+%global base_vulkan ,amd
 %endif
 
 %ifarch %{ix86} x86_64
-%global platform_drivers ,i915,i965
 %global with_iris   1
 %global with_vmware 1
 %global with_xa     1
-%global vulkan_drivers intel,amd
-%else
-%ifnarch s390x
-%global vulkan_drivers amd
-%endif
+%global platform_dri ,i915,i965
+%global platform_vulkan ,intel
 %endif
 
 %ifarch %{arm} aarch64
@@ -30,6 +28,7 @@
 %global with_vc4       1
 %global with_v3d       1
 %global with_xa        1
+%global platform_vulkan ,broadcom,freedreno
 %endif
 
 %ifnarch %{arm} s390x
@@ -46,11 +45,12 @@
 %bcond_with valgrind
 %endif
 
-%global dri_drivers %{?base_drivers}%{?platform_drivers}
+%global dri_drivers %{?base_dri}%{?platform_dri}
+%global vulkan_drivers swrast%{?base_vulkan}%{?platform_vulkan}
 
 Name:           mesa
 Summary:        Mesa graphics libraries
-%global ver 20.2.6
+%global ver 20.3.2
 Version:        %{lua:ver = string.gsub(rpm.expand("%{ver}"), "-", "~"); print(ver)}
 Release:        1%{?dist}
 License:        MIT
@@ -66,7 +66,6 @@ BuildRequires:  meson >= 0.45
 BuildRequires:  gcc
 BuildRequires:  gcc-c++
 BuildRequires:  gettext
-
 %if 0%{?with_hardware}
 BuildRequires:  kernel-headers
 %endif
@@ -123,8 +122,9 @@ BuildRequires:  pkgconfig(valgrind)
 %endif
 BuildRequires:  python3-devel
 BuildRequires:  python3-mako
-%if 0%{?with_hardware}
 BuildRequires:  vulkan-headers
+%if 0%{?with_vulkan_hw}
+BuildRequires:  pkgconfig(vulkan)
 %endif
 
 %description
@@ -320,38 +320,38 @@ cp %{SOURCE1} docs/
 %define _lto_cflags %{nil}
 
 %meson \
-  -Dplatforms=x11,wayland,drm,surfaceless \
-  -Ddri3=true \
+  -Dplatforms=x11,wayland \
+  -Ddri3=enabled \
   -Ddri-drivers=%{?dri_drivers} \
+  -Dosmesa=gallium \
 %if 0%{?with_hardware}
-  -Dgallium-drivers=swrast,virgl,r300,nouveau%{?with_iris:,iris}%{?with_vmware:,svga}%{?with_radeonsi:,radeonsi,r600}%{?with_freedreno:,freedreno}%{?with_etnaviv:,etnaviv}%{?with_tegra:,tegra}%{?with_vc4:,vc4}%{?with_v3d:,v3d}%{?with_kmsro:,kmsro}%{?with_lima:,lima}%{?with_panfrost:,panfrost} \
+  -Dgallium-drivers=swrast,virgl,r300,nouveau%{?with_iris:,iris}%{?with_vmware:,svga}%{?with_radeonsi:,radeonsi,r600}%{?with_freedreno:,freedreno}%{?with_etnaviv:,etnaviv}%{?with_tegra:,tegra}%{?with_vc4:,vc4}%{?with_v3d:,v3d}%{?with_kmsro:,kmsro}%{?with_lima:,lima}%{?with_panfrost:,panfrost}%{?with_vulkan_hw:,zink} \
 %else
   -Dgallium-drivers=swrast,virgl \
 %endif
-  -Dgallium-vdpau=%{?with_vdpau:true}%{!?with_vdpau:false} \
-  -Dgallium-xvmc=false \
+  -Dgallium-vdpau=%{?with_vdpau:enabled}%{!?with_vdpau:disabled} \
+  -Dgallium-xvmc=disabled \
   -Dgallium-omx=%{?with_omx:bellagio}%{!?with_omx:disabled} \
-  -Dgallium-va=%{?with_vaapi:true}%{!?with_vaapi:false} \
-  -Dgallium-xa=%{?with_xa:true}%{!?with_xa:false} \
+  -Dgallium-va=%{?with_vaapi:enabled}%{!?with_vaapi:disabled} \
+  -Dgallium-xa=%{?with_xa:enabled}%{!?with_xa:disabled} \
   -Dgallium-nine=%{?with_nine:true}%{!?with_nine:false} \
   -Dgallium-opencl=%{?with_opencl:icd}%{!?with_opencl:disabled} \
   -Dvulkan-drivers=%{?vulkan_drivers} \
-  -Dshared-glapi=true \
-  -Dgles1=false \
-  -Dgles2=true \
+  -Dvulkan-device-select-layer=true \
+  -Dshared-glapi=enabled \
+  -Dgles1=disabled \
+  -Dgles2=enabled \
   -Dopengl=true \
-  -Dgbm=true \
+  -Dgbm=enabled \
   -Dglx=dri \
-  -Degl=true \
+  -Degl=enabled \
   -Dglvnd=true \
   -Dasm=%{?with_asm:true}%{!?with_asm:false} \
-  -Dllvm=true \
-  -Dshared-llvm=true \
-  -Dvalgrind=%{?with_valgrind:true}%{!?with_valgrind:false} \
+  -Dllvm=enabled \
+  -Dshared-llvm=enabled \
+  -Dvalgrind=%{?with_valgrind:enabled}%{!?with_valgrind:disabled} \
   -Dbuild-tests=false \
   -Dselinux=true \
-  -Dosmesa=gallium \
-  -Dvulkan-device-select-layer=true \
   %{nil}
 %meson_build
 
@@ -467,6 +467,10 @@ popd
 %files dri-drivers
 %dir %{_datadir}/drirc.d
 %{_datadir}/drirc.d/00-mesa-defaults.conf
+%{_libdir}/dri/kms_swrast_dri.so
+%{_libdir}/dri/swrast_dri.so
+%{_libdir}/dri/virtio_gpu_dri.so
+
 %if 0%{?with_hardware}
 %{_libdir}/dri/radeon_dri.so
 %{_libdir}/dri/r200_dri.so
@@ -530,6 +534,8 @@ popd
 %{_libdir}/dri/hx8357d_dri.so
 %{_libdir}/dri/ili9225_dri.so
 %{_libdir}/dri/ili9341_dri.so
+%{_libdir}/dri/imx-dcss_dri.so
+%{_libdir}/dri/mediatek_dri.so
 %{_libdir}/dri/meson_dri.so
 %{_libdir}/dri/mi0283qt_dri.so
 %{_libdir}/dri/pl111_dri.so
@@ -539,9 +545,9 @@ popd
 %{_libdir}/dri/st7735r_dri.so
 %{_libdir}/dri/sun4i-drm_dri.so
 %endif
-%{_libdir}/dri/kms_swrast_dri.so
-%{_libdir}/dri/swrast_dri.so
-%{_libdir}/dri/virtio_gpu_dri.so
+%if 0%{?with_vulkan_hw}
+%{_libdir}/dri/zink_dri.so
+%endif
 
 %if 0%{?with_hardware}
 %if 0%{?with_omx}
@@ -560,25 +566,34 @@ popd
 %endif
 
 %files vulkan-drivers
-%if 0%{?with_hardware}
+%{_libdir}/libvulkan_lvp.so
+%{_datadir}/vulkan/icd.d/lvp_icd.*.json
+%{_libdir}/libVkLayer_MESA_device_select.so
+%{_datadir}/vulkan/implicit_layer.d/VkLayer_MESA_device_select.json
+%if 0%{?with_vulkan_hw}
+%{_libdir}/libvulkan_radeon.so
+%{_datadir}/vulkan/icd.d/radeon_icd.*.json
 %ifarch %{ix86} x86_64
 %{_libdir}/libvulkan_intel.so
 %{_datadir}/vulkan/icd.d/intel_icd.*.json
 %endif
-%{_libdir}/libvulkan_radeon.so
-%{_datadir}/vulkan/icd.d/radeon_icd.*.json
-%{_libdir}/libVkLayer_MESA_device_select.so
-%{_datadir}/vulkan/implicit_layer.d/VkLayer_MESA_device_select.json
+%ifarch %{arm} aarch64
+%{_libdir}/libvulkan_broadcom.so
+%{_datadir}/vulkan/icd.d/broadcom_icd.*.json
+%{_libdir}/libvulkan_freedreno.so
+%{_datadir}/vulkan/icd.d/freedreno_icd.*.json
+%endif
 %endif
 
 %files vulkan-devel
-%if 0%{?with_hardware}
 %ifarch %{ix86} x86_64
 %{_includedir}/vulkan/vulkan_intel.h
 %endif
-%endif
 
 %changelog
+* Thu Dec 31 2020 Pete Walter <pwalter@fedoraproject.org> - 20.3.2-1
+- Update to 20.3.2
+
 * Thu Dec 17 2020 Pete Walter <pwalter@fedoraproject.org> - 20.2.6-1
 - Update to 20.2.6
 
