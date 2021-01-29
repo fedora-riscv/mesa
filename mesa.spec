@@ -52,7 +52,7 @@ Name:           mesa
 Summary:        Mesa graphics libraries
 %global ver 20.3.3
 Version:        %{lua:ver = string.gsub(rpm.expand("%{ver}"), "-", "~"); print(ver)}
-Release:        3%{?dist}
+Release:        4%{?dist}
 License:        MIT
 URL:            http://www.mesa3d.org
 
@@ -66,6 +66,9 @@ Source1:        Mesa-MLAA-License-Clarification-Email.txt
 Patch0: 0001-device-select-layer-update-for-vulkan-1.2.patch
 # fix lvp extension missing
 Patch1: 0001-lavapipe-fix-missing-piece-of-VK_KHR_get_physical_de.patch
+
+# fix qemu/egl issue
+Patch2: fix-egl.patch
 
 BuildRequires:  meson >= 0.45
 BuildRequires:  gcc
@@ -596,6 +599,9 @@ popd
 %endif
 
 %changelog
+* Fri Jan 29 2021 Dave Airlie <airlied@redhat.com> - 20.3.3-7
+- Backport upstream fix for EGL issues with qemu
+
 * Fri Jan 15 2021 Dave Airlie <airlied@redhat.com> - 20.3.3-3
 - Fix lavapipe missing ext that breaks gstreamer/pidgin
 
