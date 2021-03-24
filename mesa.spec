@@ -50,9 +50,9 @@
 
 Name:           mesa
 Summary:        Mesa graphics libraries
-%global ver 20.3.4
+%global ver 20.3.5
 Version:        %{lua:ver = string.gsub(rpm.expand("%{ver}"), "-", "~"); print(ver)}
-Release:        2%{?dist}
+Release:        1%{?dist}
 License:        MIT
 URL:            http://www.mesa3d.org
 
@@ -61,12 +61,6 @@ Source0:        https://mesa.freedesktop.org/archive/%{name}-%{ver}.tar.xz
 # Source1 contains email correspondence clarifying the license terms.
 # Fedora opts to ignore the optional part of clause 2 and treat that code as 2 clause BSD.
 Source1:        Mesa-MLAA-License-Clarification-Email.txt
-
-# fix qemu/egl issue
-Patch2: fix-egl.patch
-
-# fix vmwgfx/sddm issue
-Patch3: 0001-glx-proposed-fix-for-setSwapInterval.patch
 
 BuildRequires:  meson >= 0.45
 BuildRequires:  gcc
@@ -597,6 +591,9 @@ popd
 %endif
 
 %changelog
+* Wed Mar 24 2021 Pete Walter <pwalter@fedoraproject.org> - 20.3.5-1
+- Update to 20.3.5
+
 * Mon Feb 22 2021 Dave Airlie <airlied@redhat.com> - 20.3.4-2
 - Attempt to fix vmwgfx/sddm crash.
 
