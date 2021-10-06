@@ -1,0 +1,28 @@
+From 7a97778f9175b29b2c0769711b5045a8a70e8d29 Mon Sep 17 00:00:00 2001
+From: Dave Airlie <airlied@redhat.com>
+Date: Wed, 6 Oct 2021 17:13:46 +1000
+Subject: [PATCH] device_select: close dri3 fd after using it.
+
+This can leak and causes crashes in some CTS test groups
+dEQP-VK.wsi.xcb.incremental_present*
+
+Fixes: 9bc5b2d169d3 ("vulkan: add initial device selection layer. (v6.1)")
+---
+ src/vulkan/device-select-layer/device_select_x11.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/vulkan/device-select-layer/device_select_x11.c b/src/vulkan/device-select-layer/device_select_x11.c
+index 93b39f269a4..b17402e7b06 100644
+--- a/src/vulkan/device-select-layer/device_select_x11.c
++++ b/src/vulkan/device-select-layer/device_select_x11.c
+@@ -93,6 +93,7 @@ int device_select_find_xcb_pci_default(struct device_pci_info *devices, uint32_t
+ 
+   drmDevicePtr xdev;
+   int ret = drmGetDevice2(dri3_fd, 0, &xdev);
++  close(dri3_fd);
+   if (ret < 0)
+     goto out;
+ 
+-- 
+2.31.1
+

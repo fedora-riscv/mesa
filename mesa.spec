@@ -58,7 +58,7 @@ Name:           mesa
 Summary:        Mesa graphics libraries
 %global ver 21.1.8
 Version:        %{lua:ver = string.gsub(rpm.expand("%{ver}"), "-", "~"); print(ver)}
-Release:        1%{?dist}
+Release:        2%{?dist}
 License:        MIT
 URL:            http://www.mesa3d.org
 
@@ -68,6 +68,7 @@ Source0:        https://mesa.freedesktop.org/archive/%{name}-%{ver}.tar.xz
 # Fedora opts to ignore the optional part of clause 2 and treat that code as 2 clause BSD.
 Source1:        Mesa-MLAA-License-Clarification-Email.txt
 
+Patch1: 0001-device_select-close-dri3-fd-after-using-it.patch
 BuildRequires:  meson >= 0.45
 BuildRequires:  gcc
 BuildRequires:  gcc-c++
@@ -602,6 +603,9 @@ popd
 %files vulkan-devel
 
 %changelog
+* Wed Oct 06 2021 Dave Airlie <airlied@redhat.com> - 21.1.8-2
+- add fix for leaking fd in device select
+
 * Wed Sep 08 2021 Pete Walter <pwalter@fedoraproject.org> - 21.1.8-1
 - Update to 21.1.8
 
