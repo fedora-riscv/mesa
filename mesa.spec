@@ -58,7 +58,7 @@ Name:           mesa
 Summary:        Mesa graphics libraries
 %global ver 21.1.8
 Version:        %{lua:ver = string.gsub(rpm.expand("%{ver}"), "-", "~"); print(ver)}
-Release:        2%{?dist}
+Release:        3%{?dist}
 License:        MIT
 URL:            http://www.mesa3d.org
 
@@ -69,6 +69,7 @@ Source0:        https://mesa.freedesktop.org/archive/%{name}-%{ver}.tar.xz
 Source1:        Mesa-MLAA-License-Clarification-Email.txt
 
 Patch1: 0001-device_select-close-dri3-fd-after-using-it.patch
+Patch2: 0001-util-fossilize_db-Don-t-corrupt-keys-during-entry-re.patch
 BuildRequires:  meson >= 0.45
 BuildRequires:  gcc
 BuildRequires:  gcc-c++
@@ -603,6 +604,9 @@ popd
 %files vulkan-devel
 
 %changelog
+* Tue Oct 12 2021 Dave Airlie <airlied@redhat.com> - 21.1.8-3
+- Fix fossilize_db bug.
+
 * Wed Oct 06 2021 Dave Airlie <airlied@redhat.com> - 21.1.8-2
 - add fix for leaking fd in device select
 
