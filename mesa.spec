@@ -1,4 +1,4 @@
-%ifnarch s390x
+%ifnarch s390x riscv64
 %global with_hardware 1
 %global with_vulkan_hw 1
 %global with_vdpau 1
